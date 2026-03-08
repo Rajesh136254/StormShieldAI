@@ -5,6 +5,16 @@ Run: streamlit run frontend/app.py
 """
 from __future__ import annotations
 
+import os
+import sys
+
+# ── Cloud Deployment Path Fix ──────────────────────────────────────────────
+# When running on Streamlit Cloud, add the 'stormshield' directory to the path
+current_dir = os.path.dirname(os.path.abspath(__file__))
+parent_dir = os.path.dirname(current_dir)
+if parent_dir not in sys.path:
+    sys.path.append(parent_dir)
+
 import time
 from datetime import datetime, timezone
 

@@ -8,6 +8,7 @@ import httpx
 import streamlit as st
 import pandas as pd
 import datetime
+from frontend.config import BACKEND_URL
 
 def get_weather_desc(code: int) -> str:
     """Map WMO weather codes to human-readable strings."""
@@ -65,15 +66,16 @@ def render_weather_panel() -> None:
     """, unsafe_allow_html=True)
 
     # Montgomery coordinates
-    lat = 32.3668
-    lon = -86.3000
-    
-    url = f"https://api.open-meteo.com/v1/forecast?latitude={lat}&longitude={lon}&current=temperature_2m,relative_humidity_2m,precipitation,wind_speed_10m,weather_code&hourly=temperature_2m,precipitation_probability,precipitation&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_sum&timezone=America%2FChicago"
+    url = f"{BACKEND_URL}/api/forecast/weather"
     
     try:
-        resp = httpx.get(url, timeout=10)
+        resp = httpx.get(url, timeout=12)
         resp.raise_for_status()
         data = resp.json()
+        
+        if "error" in data:
+            st.error(f"⚠️ Could not load weather data: {data['error']}")
+            return
         
         current = data.get("current", {})
         temp = current.get("temperature_2m", "--")

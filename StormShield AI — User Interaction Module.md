@@ -8,7 +8,7 @@ This document defines the core user-driven interactions within the StormShield A
 **User Action**: Types a street address into the sidebar input field and presses `Enter`.
 **System Response**: A spinner appears while the system geocodes the address, performs an spatial search, and then renders a "Local Risk Report" card showing FEMA zone type, local rainfall intensity, and risk level (High/Moderate/Low). The map automatically zooms to the resulting location with a marker.
 **Module Name**: `AddressLookupComponent`
-**Dependencies**: `httpx` (API call), `Folium` (Map markers), `Shapely` (Backend STRtree).
+**Dependencies**: `httpx` (API call), `Folium` (Map markers), `Shapely` (Backend STRtree), `SQLite` (flood zones).
 **State Changes**: Updates `st.session_state["lookup_result"]` with geocoordinates and risk metadata.
 
 ## 2. Dynamic Theme Switching
@@ -50,7 +50,7 @@ This document defines the core user-driven interactions within the StormShield A
 **User Action**: Hovers over or clicks on a shaded polygon in the Folium map.
 **System Response**: A floating tooltip (on hover) or persistent popup (on click) appears showing the FEMA Zone ID (e.g., "Zone AE"), Special Flood Hazard Area (SFHA) status, and specific area name.
 **Module Name**: `FloodMapRenderer`
-**Dependencies**: `folium.GeoJson`, `streamlit-folium`, FEMA GeoJSON cache.
+**Dependencies**: `folium.GeoJson`, `streamlit-folium`, FEMA GeoJSON via Bright Data and SQLite DB.
 **State Changes**: None (Stateless visual feedback).
 
 ## 8. Time-Series Trend Analysis
@@ -59,3 +59,10 @@ This document defines the core user-driven interactions within the StormShield A
 **Module Name**: `GaugeHistoryChart`
 **Dependencies**: `Plotly.graph_objects`, `Pandas` (for time-axis formatting).
 **State Changes**: None (Stateless visual feedback).
+
+## 9. SMS Alert Subscription (Tab 5)
+**User Action**: Types their phone number into the subscription input field and clicks 'Subscribe' to receive emergency messages over SMS.
+**System Response**: A spinner appears while the system registers the user in the SQLite database and confirms the subscription with a success toast message. Under the hood, this integrates with the `2factor.in` API to send alerts when the system status changes.
+**Module Name**: `SMSAlertSubscription`
+**Dependencies**: `httpx` (API call for 2factor.in), `SQLite` (Subscribers database table).
+**State Changes**: Success message rendered, no persistent global state side effects in the frontend.

@@ -38,7 +38,8 @@ For deep dives into the system architecture, feature breakdown, and developer gu
 - **Processing**: Pandas, NumPy, SciPy (Rolling means & Z-score signal filtering).
 - **ML/AI**: XGBoost, Scikit-learn, Google Generative AI (Gemini 2.0 Flash).
 - **Spatial**: Shapely (STRtree lookup), Geopy (Nominatim geocoding).
-- **Automation**: APScheduler (In-memory job scheduling), Selenium (Bright Data scraping fallback).
+- **Automation**: APScheduler (In-memory job scheduling), Bright Data (Scraping browser integration for EMA alerts, 911 logs, and raw flood zone geo-data).
+- **Database / Notifications**: Embedded SQLite3 (flood zones & SMS subscribers), 2factor.in (SMS broadcasts).
 
 ### Frontend
 - **Framework**: Streamlit 1.41.x.
@@ -51,8 +52,8 @@ For deep dives into the system architecture, feature breakdown, and developer gu
 
 ### 1. Set Up Environment
 ```bash
-git clone https://github.com/Tanishaaaaaaa/StormShield.git
-cd StormShield
+git clone https://github.com/Rajesh136254/StormShieldAI.git
+cd StormShieldAI
 python -m venv venv
 source venv/bin/activate  # Mac/Linux: source venv/bin/activate | Windows: venv\Scripts\activate
 ```
@@ -66,11 +67,13 @@ pip install -r requirements.txt
 ### 3. Configure `.env`
 Create a `.env` in `stormshield/` with your keys:
 ```ini
-GEMINI_API_KEY=your_key
-BRIGHTDATA_API_KEY=your_key
+GEMINI_API_KEY=your_gemini_key
+BRIGHTDATA_API_KEY=your_brightdata_password
+TWO_FACTOR_API_KEY=your_2factor_in_key
 USGS_STATION_ID=01648000
 FLOOD_STAGE_FT=8.0
 BACKEND_URL=http://localhost:8000
+POLL_USGS_INTERVAL=1800
 ```
 
 ### 4. Application Components
@@ -108,7 +111,7 @@ StormShield/
     ├── frontend/
     │   ├── app.py                 # Theme & Tab Orchestrator
     │   └── components/            # Modular UI Widgets (Map, Gauges, Chat)
-    └── data/                      # Local Cache (FEMA Zones, EMA Logs)
+    └── data/                      # Local Storage (SQLite DB, FEMA Zones, EMA Logs)
 ```
 
 ---

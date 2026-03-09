@@ -30,6 +30,10 @@ beautifulsoup4==4.12.3          # HTML scraping (EMA alerts)
 feedparser==6.0.11              # RSS parsing (NWS alerts)
 selenium==4.x                   # Browser automation (Bright Data proxy)
 
+# Database & Notifications
+sqlite3                         # Embedded database (built-in)
+# 2factor.in used via httpx for SMS
+
 # Spatial Geoprocessing
 shapely==2.0.6                  # STRtree spatial indexing
 geopy==2.4.1                    # Geocoding utilities
@@ -64,8 +68,9 @@ stormshield/
 │   │   ├── processing/      # Smoothing, Z-score filtering, feature engineering.
 │   │   ├── query/           # RAG engine for grounded LLM responses.
 │   │   └── simulation/      # Hydrological runoff reduction calculators.
+│   ├── modules/database.py  # SQLite database connection and ORM functions.
 │   ├── routers/             # FastAPI endpoint definitions (RESTful).
-│   └── data/                # Local cache: flood_zones.json, ema_alerts.json.
+│   └── data/                # Local storage: SQLite DB, flood_zones.json, ema_alerts.json.
 ├── frontend/
 │   ├── app.py               # Theme logic, layout, and tab orchestration.
 │   ├── config.py            # Frontend constants (BACKEND_URL, REFRESH_OPTIONS).
@@ -75,7 +80,7 @@ stormshield/
 ## Functional Modules
 
 ### Module 1: Data Ingestion & Signal Processing
-The system uses `APScheduler` to poll USGS and NOAA APIs every 5-15 minutes. Raw stream gauge data is processed through a dual-stage filter: a 15-minute rolling mean to reduce noise, followed by a Z-score outlier filter to drop physically impossible spikes (deltas > 2.0 ft).
+The system uses `APScheduler` to poll USGS and NOAA APIs. Raw stream gauge data is processed through a dual-stage filter: a 15-minute rolling mean to reduce noise, followed by a Z-score outlier filter. Bright Data is used to scrape dynamic EMA alerts and raw FEMA flood zone GeoJSON data, keeping the database updated.
 
 ### Module 2: Flood Prediction Engine
 The prediction pipeline constructs a 9-dimensional feature vector containing historical water levels, discharge rates, and rainfall proxies. This vector is fed into an XGBoost regressor to predict values at T+30 minutes. A confidence score is derived by comparing model residual variance against a baseline.
@@ -87,6 +92,10 @@ Alert levels are evaluated against Montgomery's flood stage thresholds. If a thr
 Users can input any address in Montgomery to receive a localized risk report. The backend geocodes the address and performs a high-speed point-in-polygon search using a `Shapely.STRtree` index over FEMA GeoJSON features.
 
 ## Data Models
+
+### Database Layers (SQLite)
+- **`flood_zones` Table**: Persistent spatial database storing FEMA geometry for fast queries.
+- **`subscribers` Table**: User contact tracking for the SMS broadcast system.
 
 ### Sensor and Forecast Schemas
 ```python
@@ -129,6 +138,7 @@ The Dashboard is built as a responsive 4-tab interface with dual-theme support (
 - **Tab 2: Situation Report**: A data-dense filterable table showing historical alert cycles and the full text of latest advisories.
 - **Tab 3: Ask StormShield AI**: A RAG-powered chat interface using Streamlit's native `st.chat_message` components.
 - **Tab 4: Weather Analysis**: Detailed weather breakdown using Open-Meteo data, focusing on precipitation probability and temperature trends.
+- **Tab 5: SMS Alerts**: A subscription form for users to sign up for emergency flood alerts via SMS (powered by 2factor.in).
 
 ### Theme & Interaction
 The application implements a unique glassmorphic injection system for themes.
@@ -136,14 +146,12 @@ The application implements a unique glassmorphic injection system for themes.
 - **Coastal Mist**: A high-contrast light theme using soft azure gradients.
 - **Simulation Sidebar**: Allows users to stress-test the UI by injecting "Moderate", "High", or "Flood" scenarios.
 
-## Constraints and Out of Scope
-The system relies on a local JSON file cache system instead of a persistent external database to minimize latency and hosting costs for the hackathon MVP. Map rendering is strictly limited to Folium/Leaflet.js to avoid Mapbox or Google Maps licensing fees. Direct ArcGIS REST API calls are excluded; all spatial data must pass through the Bright Data scraper or the local GeoJSON cache. Real-time SMS notifications and user authentication are currently out of scope.
-
 ## Implementation Order
 
 ### Phase 1: Core Foundation & Configuration
 1. Build `config.py` (Backend/Frontend) to handle `.env` loading.
-2. Implement `backend/modules/cache/store.py` for the TTL-based in-memory and JSON storage.
+2. Initialize `backend/modules/database.py` to set up the SQLite database and tables.
+3. Implement `backend/modules/cache/store.py` for the TTL-based in-memory and JSON storage.
 
 ### Phase 2: Ingestion & Processing
 1. Implement USGS and NOAA clients using `httpx`.
@@ -153,7 +161,8 @@ The system relies on a local JSON file cache system instead of a persistent exte
 ### Phase 3: Prediction & Alert Logic
 1. Load and wrap the XGBoost model in `modules/prediction/model.py`.
 2. Implement threshold evaluation logic in `modules/alert/engine.py`.
-3. Build the Gemini 2.0 Flash alert generator.
+3. Build the Gemini 2.0 Flash alert generator in `llm_generator.py`.
+4. Integrate the 2factor.in SMS delivery module for emergency alerting (`sms.py`).
 
 ### Phase 4: Spatial & Query Engines
 1. Build the STRtree lookup engine in `routers/geodata.py`.

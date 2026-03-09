@@ -25,6 +25,8 @@ StormShield AI is a distributed flood prediction and civic alert architecture co
 | **Selenium** | 4.x | Browser automation (via Bright Data) for dynamic Montgomery portal scraping. |
 | **Python-Dotenv** | 1.0.x | Environment variable management for API keys. |
 | **Geopy** | 2.4.x | Fallback geocoding and coordinate utilities. |
+| **SQLite3** | built-in | Lightweight database for persistent spatial features and subscriptions. |
+| **2factor.in** | latest | SMS delivery system for emergency broadcast alerting. |
 
 ### Frontend
 | Package | Version | Justification |
@@ -86,6 +88,10 @@ stormshield/
 
 ## 5. Data Models & State Management
 
+### Backend Database (SQLite)
+- **`flood_zones` Table**: Persistent spatial database of FEMA geometry.
+- **`subscribers` Table**: User contact tracking for the SMS broadcast system.
+
 ### Backend Schemas (Pydantic v2)
 - `SensorReading`: `timestamp: datetime`, `water_level_ft: float`, `discharge_cfs: float`.
 - `PredictionResult`: `predicted_level_ft: float`, `confidence_score: float`, `estimated_crest: datetime`.
@@ -108,7 +114,7 @@ Streamlit `st.session_state` is used for non-persistent UI state:
 | `/api/query` | POST | Submits user prompt to the RAG engine. |
 | `/health` | GET | Returns model load status and cache age. |
 
-**Data Flow**: `USGS -> Smoother -> Predictor -> Alert Engine -> Cache -> Frontend`.
+**Data Flow**: `USGS -> Smoother -> Predictor -> Alert Engine -> SMS Alerting -> Cache -> Frontend`.
 
 ## 7. UI Component Hierarchy
 - **`app.py`**: Root layout with `st.tabs`.
@@ -122,6 +128,8 @@ Streamlit `st.session_state` is used for non-persistent UI state:
         - Chat interface (`st.chat_message`).
     - **Tab 4: Weather Analysis**: 
         - Open-Meteo forecast grid and bar charts.
+    - **Tab 5: SMS Alerts**: 
+        - Phone number subscription form for emergency notifications.
 - **Sidebar**: Theme toggle, Simulation scenario selector, Address lookup port.
 
 ## 8. Theme & Simulation Systems 
@@ -138,9 +146,6 @@ Front-end interceptor that injects synthetic state (RED/YELLOW) into the session
 
 ## 9. Explicit Constraints & Out-of-Scope
 - **Constraints**: 
-    - No external persistent DB (JSON file cache only).
+    - Database is restricted to lightweight embedded SQLite.
     - Mapbox GL JS/ArcGIS API keys are restricted; use Folium/OSM.
     - Rate limit: 1 LLM call per 3 seconds.
-- **Out-of-Scope**:
-    - User authentication/Session persistence.
-    - SMS/Push notifications.

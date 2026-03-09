@@ -5,6 +5,12 @@
 
 ---
 
+## 🎥 Tech Demo
+Watch our 5-minute technical demonstration on YouTube:
+[**StormShield AI — Tech Demo**](https://www.youtube.com/watch?v=La_nr6mdPw0)
+
+---
+
 ## 📄 Documentation
 
 For deep dives into the system architecture, feature breakdown, and developer guides, refer to the following:

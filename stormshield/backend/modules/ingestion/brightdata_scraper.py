@@ -76,27 +76,29 @@ def _brightdata_request(url: str, password: str) -> str | None:
         return None
 
 def _download_flood_data(url: str, password: str) -> dict | None:
-    """Specialised high-capacity downloader for 20MB+ ArcGIS files."""
-    # We use a standard HTTP proxy on port 22225 for large data files instead of a headful browser
-    proxy_url = f"https://brd-customer-hl_0e293ce6-zone-scraping_browser1:fh1wk5f53598@brd.superproxy.io:22225"
+    """Specialised high-capacity downloader using Bright Data Scraping Browser."""
+    logger.info("Starting large-file download for %s using Scraping Browser...", url)
     
-    logger.info("Starting large-file download for %s...", url)
-    try:
-        # Increase timeout significantly for 20MB+ payload
-        with httpx.Client(proxy=proxy_url, verify=False, timeout=180.0) as client:
-            resp = client.get(url)
-            resp.raise_for_status()
-            data = resp.json()
-            logger.info("Successfully downloaded and parsed %d features.", len(data.get("features", [])))
-            return data
-    except Exception as exc:
-        logger.warning("Proxy download failed (%s), trying direct...", exc)
+    # We must use the browser interface (Selenium) as Scraping Browser zones 
+    # reject standard HTTP proxy requests like httpx with a 403 error.
+    content = _brightdata_request(url, password)
+    
+    if content is None or len(content.strip()) == 0:
+        logger.warning("Scraping Browser failed for flood data, trying direct...")
         try:
             resp = httpx.get(url, timeout=180.0)
             return resp.json()
         except Exception as exc2:
             logger.error("All download methods failed for flood data: %s", exc2)
             return None
+            
+    try:
+        data = json.loads(str(content))
+        logger.info("Successfully downloaded and parsed %d features.", len(data.get("features", [])))
+        return data
+    except Exception as exc:
+        logger.error("Failed to parse JSON from Scraping Browser: %s", exc)
+        return None
 
 
 def scrape_flood_zones(password: str = "", force: bool = False) -> dict:

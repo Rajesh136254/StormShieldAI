@@ -47,35 +47,45 @@ def _brightdata_request(url: str, password: str) -> str | None:
 
     try:
         from selenium.webdriver import Remote, ChromeOptions
+        from selenium.webdriver.support.ui import WebDriverWait
         import time
         
-        # Original port 9515 is correct for Selenium/CDP
         proxy_url = f"https://brd-customer-hl_0e293ce6-zone-scraping_browser1:fh1wk5f53598@brd.superproxy.io:9515"
         logger.info(f"Connecting to Scraping Browser for {url}...")
         
         options = ChromeOptions()
-        # Default strategy (normal) is safer for very large payloads
-        options.page_load_strategy = 'normal'
+        # 'none' strategy returns control immediately after navigation starts
+        # We will handle the wait ourselves to avoid Chrome's renderer timing out on large JSON blobs
+        options.page_load_strategy = 'none'
         
-        # Increase connection timeout for the remote driver
         driver = Remote(command_executor=proxy_url, options=options)
         try:
-            # Set script and page timeouts to handle huge GeoJSON responses
-            driver.set_page_load_timeout(120)
-            driver.set_script_timeout(120)
+            # Huge timeout for large data streams
+            driver.set_page_load_timeout(180)
+            driver.set_script_timeout(180)
             
-            driver.get(url)
-            # Extra wait to ensure binary/text stream is fully buffered in the browser
-            time.sleep(5)
+            # Navigate to a blank page first to have a context for execution
+            driver.get("about:blank")
             
-            if any(ext in url for ext in ["/explore", "f=geojson", "f=json"]):
-                # Use a more direct way to get text that won't crash on huge strings
-                content = driver.execute_script("return document.documentElement.innerText;")
-            else:
-                content = driver.page_source
+            # Perform an async fetch inside the browser. This is often more resilient 
+            # for 20MB+ responses than navigating the main frame.
+            fetch_script = """
+            const callback = arguments[arguments.length - 1];
+            fetch(arguments[0])
+                .then(r => r.text())
+                .then(text => callback(text))
+                .catch(err => callback("ERROR: " + err));
+            """
+            
+            logger.info("Starting async fetch inside browser context...")
+            content = driver.execute_async_script(fetch_script, url)
+            
+            if content and content.startswith("ERROR:"):
+                logger.error("Browser-side fetch failed: %s", content)
+                return None
                 
             if content:
-                logger.info(f"Successfully fetched {len(content)} characters via Browser.")
+                logger.info(f"Successfully fetched {len(content)} characters via Browser fetch.")
             return content
         finally:
             driver.quit()

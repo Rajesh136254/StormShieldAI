@@ -16,5 +16,4 @@ venv/
 .streamlit/
 
 # Data files
-stormshield/data/
-stormshield/backend/modules/prediction/artifacts/
+stormshield/data/flood_zones.json

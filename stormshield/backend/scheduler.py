@@ -105,8 +105,7 @@ def job_scrape_flood_zones() -> None:
     data = scrape_flood_zones(settings.brightdata_api_key, force=True)
     if data and data.get("features"):
         save_flood_zones(data)
-        cache.set("flood_zones", data, ttl_seconds=settings.scrape_flood_interval + 60)
-        logger.info("[Scheduler] Flood zones synced to database and cache.")
+        logger.info("[Scheduler] Flood zones synced to database.")
     else:
         logger.warning("[Scheduler] Flood zone scrape returned no data.")
 

@@ -30,11 +30,11 @@ class Settings(BaseSettings):
     model_path: str = "backend/modules/prediction/artifacts/xgb_model.joblib"
 
     # Scheduler intervals (seconds)
-    poll_usgs_interval: int = 300
-    poll_noaa_interval: int = 900
-    scrape_ema_interval: int = 900
-    scrape_flood_interval: int = 900
-    run_prediction_interval: int = 300
+    poll_usgs_interval: int = 3600
+    poll_noaa_interval: int = 3600
+    scrape_ema_interval: int = 3600
+    scrape_flood_interval: int = 86400
+    run_prediction_interval: int = 3600
 
     # Frontend
     backend_url: str = "http://localhost:8000"

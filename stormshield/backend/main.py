@@ -41,14 +41,16 @@ async def lifespan(app: FastAPI):
     
     # Pre-load flood zones into DB if empty or stale
     logger.info("Checking flood zones data layer...")
+    existing = get_flood_zones_geojson()
     fz_path = DATA_DIR / "flood_zones.json"
     if fz_path.exists():
         # Check if DB has data, if not load it
-        existing = get_flood_zones_geojson()
         if not existing.get("features"):
             logger.info("Initializing database with flood zones from %s...", fz_path.name)
             with open(fz_path) as f:
                 save_flood_zones(json.load(f))
+            # Refresh existing list to reflect newly loaded data
+            existing = get_flood_zones_geojson()
     
     # Seed cache from disk files
     cache.load_json_files()

@@ -33,6 +33,7 @@ google-generativeai==0.8.4
 feedparser==6.0.11
 beautifulsoup4==4.12.3
 lxml>=5.0.0
+selenium>=4.10.0
 
 # Spatial / Geocoding
 geopy==2.4.1

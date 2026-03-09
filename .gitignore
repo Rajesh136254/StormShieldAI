@@ -5,9 +5,6 @@ __pycache__/
 venv/
 .env
 
-# Model artifacts
-**/prediction/artifacts/*.joblib
-
 # Jupyter Notebook
 .ipynb_checkpoints
 
@@ -18,5 +15,6 @@ venv/
 # Streamlit
 .streamlit/
 
-# Data Files (large payloads)
-stormshield/data/*.json
+# Data files
+stormshield/data/
+stormshield/backend/modules/prediction/artifacts/

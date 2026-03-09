@@ -4,14 +4,15 @@ Frontend configuration — API base URL and refresh settings.
 import os
 
 import streamlit as st
+from dotenv import load_dotenv
+from pathlib import Path
+
+# Load environment variables from .env file
+env_path = Path(__file__).parents[1] / ".env"
+load_dotenv(dotenv_path=env_path)
 
 def get_config(key: str, default: str) -> str:
-    """Fetch from st.secrets first, then os.getenv."""
-    try:
-        if key in st.secrets:
-            return st.secrets[key]
-    except Exception:
-        pass
+    """Fetch from os.getenv."""
     return os.getenv(key, default)
 
 BACKEND_URL: str = get_config("BACKEND_URL", "http://localhost:8000")

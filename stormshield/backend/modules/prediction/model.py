@@ -37,14 +37,17 @@ class XGBoostPredictor:
             return
         try:
             self._model = joblib.load(p)
-            logger.info("XGBoost model loaded from %s", path)
+            logger.info("XGBoost model loaded (ID: %s) from %s", id(self), path)
         except Exception as exc:
             logger.error("Failed to load model: %s", exc)
             self._model = None
 
     @property
     def is_loaded(self) -> bool:
-        return self._model is not None
+        loaded = self._model is not None
+        if not loaded:
+            logger.info("is_loaded checked — result: False (ID: %s)", id(self))
+        return loaded
 
     def predict(self, features: np.ndarray) -> PredictionResult:
         """Run inference and return a PredictionResult."""
@@ -81,3 +84,6 @@ class XGBoostPredictor:
             confidence_score=conf,
             model_version=MODEL_VERSION,
         )
+
+
+predictor = XGBoostPredictor()

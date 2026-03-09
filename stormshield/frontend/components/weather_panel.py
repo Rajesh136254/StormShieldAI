@@ -133,15 +133,15 @@ def render_weather_panel() -> None:
                 "Rainfall (mm)": daily.get("precipitation_sum", [])
             })
             
-            # CSS for center-aligning table text
-            st.markdown("""
-                <style>
-                    [data-testid="stDataFrame"] td { text-align: center !important; }
-                    [data-testid="stDataFrame"] th { text-align: center !important; }
-                </style>
-            """, unsafe_allow_html=True)
+            # CSS for center-aligning table text via pandas Styler
+            styled_df = df_daily.style.set_properties(
+                subset=["Max Temp (°C)", "Min Temp (°C)", "Rainfall (mm)"],
+                **{'text-align': 'center'}
+            ).set_table_styles([
+                {'selector': 'th', 'props': [('text-align', 'center !important'), ('font-weight', 'bold !important')]}
+            ]).hide(axis="index")
             
-            st.dataframe(df_daily, use_container_width=True, hide_index=True)
+            st.dataframe(styled_df, use_container_width=True)
 
         st.markdown("<br>", unsafe_allow_html=True)
 

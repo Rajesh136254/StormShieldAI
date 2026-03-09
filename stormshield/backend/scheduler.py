@@ -37,7 +37,7 @@ def job_poll_usgs() -> None:
     rate = compute_rate_of_rise(cleaned)
 
     # Predict
-    from backend.main import predictor
+    from backend.modules.prediction.model import predictor
     prediction = predictor.predict(features)
     cache.set("forecast", prediction, ttl_seconds=300)
 
@@ -95,6 +95,22 @@ def job_scrape_ema() -> None:
     logger.info("[Scheduler] EMA/911 scrape complete.")
 
 
+def job_scrape_flood_zones() -> None:
+    """Scrape flood zones and sync to database."""
+    from backend.modules.ingestion.brightdata_scraper import scrape_flood_zones
+    from backend.modules.database import save_flood_zones
+    from backend.modules.cache import store as cache
+
+    logger.info("[Scheduler] Scraping flood zones…")
+    data = scrape_flood_zones(settings.brightdata_api_key, force=True)
+    if data and data.get("features"):
+        save_flood_zones(data)
+        cache.set("flood_zones", data, ttl_seconds=settings.scrape_flood_interval + 60)
+        logger.info("[Scheduler] Flood zones synced to database and cache.")
+    else:
+        logger.warning("[Scheduler] Flood zone scrape returned no data.")
+
+
 def configure_jobs() -> None:
     """Register all background jobs with APScheduler."""
     scheduler.add_job(
@@ -116,5 +132,12 @@ def configure_jobs() -> None:
         "interval",
         seconds=settings.scrape_ema_interval,
         id="scrape_ema",
+        replace_existing=True,
+    )
+    scheduler.add_job(
+        job_scrape_flood_zones,
+        "interval",
+        seconds=settings.scrape_flood_interval,
+        id="scrape_flood_zones",
         replace_existing=True,
     )

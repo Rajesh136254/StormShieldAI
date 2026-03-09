@@ -50,7 +50,6 @@ def load_json_files() -> None:
     if the in-memory cache is empty for those keys.
     """
     files = {
-        "flood_zones": "flood_zones.json",
         "ema_alerts": "ema_alerts.json",
         "calls_911": "calls_911.json",
     }

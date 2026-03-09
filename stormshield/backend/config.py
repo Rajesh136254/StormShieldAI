@@ -33,6 +33,7 @@ class Settings(BaseSettings):
     poll_usgs_interval: int = 300
     poll_noaa_interval: int = 900
     scrape_ema_interval: int = 900
+    scrape_flood_interval: int = 900
     run_prediction_interval: int = 300
 
     # Frontend
